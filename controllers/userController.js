@@ -1,9 +1,10 @@
 const User = require('../models/userModel');
-
+const bcrypt = require('bcryptjs');
 const create_user = async (req, res) => {
+    const jwt = require('jsonwebtoken');
 
     try {
-        const { name, email, address } = req.body;
+        const { name, email, address, password } = req.body;
         const existingUser = await User.findOne({ where: { email } });
 
         if (existingUser) {
@@ -11,7 +12,19 @@ const create_user = async (req, res) => {
         }
 
         const newUser = await User.create({ name, email, address });
-        res.status(201).json(newUser)
+
+        // Token contains Payload + secure_key + expiration time
+        const token = jwt.sign(
+            { userId: newUser.id, email: newUser.email }, 
+            process.env.SECURE_KEY, 
+            { expiresIn: '1h' } 
+        );
+        console.log('Token :' + token)
+
+        res.status(201).json({
+            message: 'Registration successful',
+            token
+        })
     }
     catch (error) {
         res.status(500).json(error);
@@ -82,6 +95,9 @@ const update_user = async (req, res) => {
         res.status(500).json("Internal Server Error..")
     }
 
+}
+const login_user = (req, res) => {
+    const { email } = req.body;
 }
 
 module.exports = { create_user, delete_user, getById, update_user, getAllusers }
