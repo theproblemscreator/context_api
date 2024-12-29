@@ -137,6 +137,7 @@ const login_user = async (req, res) => {
 }
 const change_password = async (req, res) => {
     try {
+<<<<<<< HEAD
         //check all fields are provided or not
         const { email, oldPassword, newPassword } = req.body;
         if (!email || !oldPassword || !newPassword) {
@@ -144,18 +145,33 @@ const change_password = async (req, res) => {
         }
 
         //find the user by email
+=======
+
+        const { email, oldPassword, newPassword } = req.body;
+
+        if (!email || !oldPassword || !newPassword) {
+            res.status(400).json('Email OR Password OR New Password is not Matched')
+        }
+
+>>>>>>> 6f760a2cb192d9203de879ae5e16fd496bfccb46
         const user = await User.findOne({ where: { email } });
         if (!user) {
             res.status(404).json('User Not Found');
         }
 
+<<<<<<< HEAD
         //compare the entered password with db password
+=======
+>>>>>>> 6f760a2cb192d9203de879ae5e16fd496bfccb46
         const isMatchedPassword = await bcrypt.compare(oldPassword, user.password);
         if (isMatchedPassword) {
             return res.status(401).json('Passowrd not match');
         }
 
+<<<<<<< HEAD
         // hashing the new entered password
+=======
+>>>>>>> 6f760a2cb192d9203de879ae5e16fd496bfccb46
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         user.password = hashedPassword;
         res.status(200).json({ message: 'Password is Updated Successfully........', username: user.password })
