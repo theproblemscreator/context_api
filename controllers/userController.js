@@ -7,6 +7,7 @@ const create_user = async (req, res) => {
 
     try {
         const { name, email, address, password } = req.body;
+
         const existingUser = await User.findOne({ where: { email } });
 
         if (existingUser) {
@@ -101,6 +102,7 @@ const update_user = async (req, res) => {
 
 }
 const login_user = async (req, res) => {
+
     try {
 
         const { email, password } = req.body;
@@ -108,6 +110,7 @@ const login_user = async (req, res) => {
         if (!email || !password) {
             return res.status(400).json('Email OR Passwrod is Required ')
         }
+        
         const user = await User.findOne({ where: { email } });
         if (!user) {
             return res.status(404).json('User Not Found');
@@ -118,15 +121,13 @@ const login_user = async (req, res) => {
             return res.status(401).json('Email OR Password is not Match..')
         }
 
-        // Generate the Token
-
         const token = jwt.sign(
             { id: user.id, payload: user.email },
             process.env.SECURE_KEY,
             { expiresIn: '1h' }
         );
 
-        res.status(200).json({ message: 'Login Successfull...', token })
+        res.status(200).json({ message: 'Login Successfull...', token: token })
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ message: 'Internal Server Error' });
@@ -137,31 +138,39 @@ const login_user = async (req, res) => {
 }
 const change_password = async (req, res) => {
     try {
-
         const { email, oldPassword, newPassword } = req.body;
 
+        // Validate input
         if (!email || !oldPassword || !newPassword) {
-            res.status(400).json('Email OR Password OR New Password is not Matched')
+            return res.status(400).json({ error: 'Email, Old Password, and New Password are required' });
         }
 
+        // Find the user by email
         const user = await User.findOne({ where: { email } });
         if (!user) {
-            res.status(404).json('User Not Found');
+            return res.status(404).json({ error: 'User not found' });
         }
 
+        // Check if the old password matches the stored password
         const isMatchedPassword = await bcrypt.compare(oldPassword, user.password);
-        if (isMatchedPassword) {
-            return res.status(401).json('Passowrd not match');
+        if (!isMatchedPassword) {
+            return res.status(401).json({ error: 'Old password is incorrect' });
         }
 
+        // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        user.password = hashedPassword;
-        res.status(200).json({ message: 'Password is Updated Successfully........', username: user.password })
 
-        res.status(200).json(user);
+        // Update the user's password in the database
+        user.password = hashedPassword;
+        await user.save();
+
+        return res.status(200).json({ message: 'Password updated successfully' });
+
     } catch (error) {
-        res.status(500).json('Internal Server Error...')
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
+
 
 module.exports = { create_user, delete_user, getById, update_user, getAllusers, login_user, change_password }
