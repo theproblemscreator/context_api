@@ -106,34 +106,62 @@ const login_user = async (req, res) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-           return  res.status(400).json('Email OR Passwrod is Required ')
+            return res.status(400).json('Email OR Passwrod is Required ')
         }
         const user = await User.findOne({ where: { email } });
         if (!user) {
-           return  res.status(404).json('User Not Found');
+            return res.status(404).json('User Not Found');
         }
 
         const hashedPassword = await bcrypt.compare(password, user.password);
         if (!hashedPassword) {
-          return res.status(401).json('Email OR Password is not Match..')
+            return res.status(401).json('Email OR Password is not Match..')
         }
 
         // Generate the Token
 
-        const token = jwt.sign({
-            id: user.id, payload: user.email},
+        const token = jwt.sign(
+            { id: user.id, payload: user.email },
             process.env.SECURE_KEY,
-            {expiresIn: '1h'}
+            { expiresIn: '1h' }
         );
 
-        res.status(200).json({message : 'Login Successfull...', token})
+        res.status(200).json({ message: 'Login Successfull...', token })
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ message: 'Internal Server Error' });
-   
+
 
     }
 
 }
+const change_password = async (req, res) => {
+    try {
 
-module.exports = { create_user, delete_user, getById, update_user, getAllusers,login_user }
+        const { email, oldPassword, newPassword } = req.body;
+
+        if (!email || !oldPassword || !newPassword) {
+            res.status(400).json('Email OR Password OR New Password is not Matched')
+        }
+
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            res.status(404).json('User Not Found');
+        }
+
+        const isMatchedPassword = await bcrypt.compare(oldPassword, user.password);
+        if (isMatchedPassword) {
+            return res.status(401).json('Passowrd not match');
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        res.status(200).json({ message: 'Password is Updated Successfully........', username: user.password })
+
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json('Internal Server Error...')
+    }
+}
+
+module.exports = { create_user, delete_user, getById, update_user, getAllusers, login_user, change_password }
