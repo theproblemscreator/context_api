@@ -1,5 +1,7 @@
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
 const create_user = async (req, res) => {
     const jwt = require('jsonwebtoken');
 
@@ -11,15 +13,15 @@ const create_user = async (req, res) => {
             res.status(404).json({ msg: 'User is already Registered...' });
         }
 
-                // Hash the plain password with the salt
+        // Hash the plain password with the salt
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await User.create({ name, email, address ,password : hashedPassword});
+        const newUser = await User.create({ name, email, address, password: hashedPassword });
 
         // Token contains Payload + secure_key + expiration time
         const token = jwt.sign(
-            { userId: newUser.id, email: newUser.email }, 
-            process.env.SECURE_KEY, 
-            { expiresIn: '1h' } 
+            { userId: newUser.id, email: newUser.email },
+            process.env.SECURE_KEY,
+            { expiresIn: '1h' }
         );
         console.log('Token :' + token)
 
@@ -98,8 +100,40 @@ const update_user = async (req, res) => {
     }
 
 }
-const login_user = (req, res) => {
-    const { email } = req.body;
+const login_user = async (req, res) => {
+    try {
+
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+           return  res.status(400).json('Email OR Passwrod is Required ')
+        }
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+           return  res.status(404).json('User Not Found');
+        }
+
+        const hashedPassword = await bcrypt.compare(password, user.password);
+        if (!hashedPassword) {
+          return res.status(401).json('Email OR Password is not Match..')
+        }
+
+        // Generate the Token
+
+        const token = jwt.sign({
+            id: user.id, payload: user.email},
+            process.env.SECURE_KEY,
+            {expiresIn: '1h'}
+        );
+
+        res.status(200).json({message : 'Login Successfull...', token})
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+   
+
+    }
+
 }
 
-module.exports = { create_user, delete_user, getById, update_user, getAllusers }
+module.exports = { create_user, delete_user, getById, update_user, getAllusers,login_user }
