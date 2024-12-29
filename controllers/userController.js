@@ -11,7 +11,9 @@ const create_user = async (req, res) => {
             res.status(404).json({ msg: 'User is already Registered...' });
         }
 
-        const newUser = await User.create({ name, email, address });
+                // Hash the plain password with the salt
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = await User.create({ name, email, address ,password : hashedPassword});
 
         // Token contains Payload + secure_key + expiration time
         const token = jwt.sign(
