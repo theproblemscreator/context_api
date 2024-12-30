@@ -177,6 +177,18 @@ const change_password = async (req, res) => {
     }
 };
 
+const logout = async(req,res)=>{
+    try {
+        const authHeader = req.headers["authorization"];
+        const token = authHeader && authHeader.split(" ")[1];
+        if (!token){
+            blacklistedTokens.add(token);
+        }
 
+        return res.json({ message: "Logged out successfully" });
+    } catch (error) {
+        return res.status(500).json({message : 'Internal Server Error...'});
+    }
+}
 
-module.exports = { create_user, delete_user, getById, update_user, getAllusers, login_user, change_password }
+module.exports = { create_user, delete_user, getById, update_user, getAllusers, login_user, change_password ,logout}

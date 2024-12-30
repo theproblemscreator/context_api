@@ -1,21 +1,22 @@
-const jwt = require('jsonwebtoken');
-const authenticate = (req, res, next) => {
-    try {
-        
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-        return res.status().json({ message: "NO Token is provided" });
+const jwt = require("jsonwebtoken");
+const blacklistedTokens = new Set();
+
+const authenticateToken = async (req, res, next) => {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1]; // Extract token
+
+    if (!token) return res.status(401).json({ message: "Access Denied: No Token Provided" });
+
+    if (blacklistedTokens.has(token)) {
+        return res.status(403).json({ message: "Token is invalidated (logged out)" });
     }
 
+    jwt.verify(token, process.env.SECURE_KEY, (err, user) => {
+        if (err) return res.status(403).json({ message: "Invalid Token" });
 
-        const decode = jwt.verify(token, process.env.SECURE_KEY);
-        req.user = decode;
+        req.user = user; // Attach user payload to request object
         next();
+    });
+};
 
-    } catch (error) {
-        return res.status().json({ message: 'Invalide OR Invalid Token' });
-    }
-
-}
-
-module.exports = authenticate;
+module.exports = authenticateToken;
