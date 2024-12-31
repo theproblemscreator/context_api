@@ -1,10 +1,17 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-
+const apiData = require('./public/api')
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+const PORT = 3000;
+
+app.use('/home', (req, res, next) => {
+  const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+  res.send(`Welcome to the whole URL : ${fullUrl}`);
+  next();
+});
 
 app.use(express.static('public')); // Serve static files from the 'public' folder
 
@@ -23,8 +30,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start the server
-const PORT = 3000;
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
