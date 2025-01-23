@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function Hoc(WrappedComponent) {
+function Hoc(OriginalComponent) {
     
     return function EnhancedComponent(props) {
         const [count, setCount] = useState(0);
@@ -9,7 +9,7 @@ function Hoc(WrappedComponent) {
             setCount(count + 1);
         };
 
-        return <WrappedComponent count={count} increment={increment} {...props} />;
+        return <OriginalComponent count={count} increment={increment} {...props} />;
     };
 }
 
